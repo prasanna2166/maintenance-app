@@ -11,37 +11,53 @@ function MonthlySummary({ isAdmin }) {
 
   const months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
 
+  // Fetch summary data and expenses
   const fetchSummaryData = async () => {
     try {
       const formattedMonth = `${year}-${month}`;
-      const response = await api.get('/expenses/summary', {
-        params: { month: formattedMonth },
-      });
 
-      if (response.data) {
-        setExpenses(response.data.expenses);
-        setOpeningBalance(response.data.openingBalance);
-        setClosingBalance(response.data.closingBalance);
+      // Fetch summary data
+      const summaryResponse = await api.get('/summary', { params: { month: formattedMonth } });
+
+      if (summaryResponse.data) {
+        setOpeningBalance(summaryResponse.data.openingBalance ?? 0);
+        setClosingBalance(summaryResponse.data.closingBalance ?? 0);
+      }
+
+      // Fetch expenses data
+      const expensesResponse = await api.get('/expenses', { params: { month: formattedMonth } });
+
+      if (Array.isArray(expensesResponse.data)) {
+        setExpenses(expensesResponse.data);
+      } else {
+        setExpenses([]);
       }
     } catch (error) {
-      alert('Failed to fetch data. Please try again.');
+      console.error("Error fetching summary or expenses:", error.response ? error.response.data : error.message);
+      alert("Failed to fetch data. Check console logs.");
     }
   };
 
   useEffect(() => {
-    if (year && month) {
-      fetchSummaryData();
-    }
+    fetchSummaryData();
   }, [year, month]);
 
   const handleExpenseSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/expenses', newExpense);
+      const formattedDate = newExpense.date; // Use the selected date from the form
+
+      await api.post('/expenses', {
+        amount: newExpense.amount,
+        description: newExpense.description,
+        date: formattedDate,
+      });
+
       setNewExpense({ amount: '', description: '', date: '' });
-      fetchSummaryData(); // Refresh after adding
+      fetchSummaryData(); // Refresh summary and expenses after adding
     } catch (err) {
-      alert('Failed to add expense');
+      console.error("Error adding expense:", err.response ? err.response.data : err.message);
+      alert('Failed to add expense.');
     }
   };
 
@@ -59,10 +75,9 @@ function MonthlySummary({ isAdmin }) {
             value={year}
             onChange={(e) => setYear(e.target.value)}
           >
-            <option value="2023">2023</option>
-            <option value="2024">2024</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
+            {['2023', '2024', '2025', '2026'].map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
           </select>
         </div>
 
@@ -133,28 +148,27 @@ function MonthlySummary({ isAdmin }) {
       )}
 
       <div className="overflow-hidden shadow-lg rounded-lg bg-white p-4">
+        <h3 className="text-xl font-semibold mb-4">Expenses for {month}-{year}</h3>
         <table className="min-w-full table-auto border-collapse">
           <thead className="bg-blue-600 text-white">
             <tr>
-              <th className="px-4 py-3 text-left font-semibold">Expense Type</th>
               <th className="px-4 py-3 text-left font-semibold">Amount</th>
               <th className="px-4 py-3 text-left font-semibold">Date</th>
               <th className="px-4 py-3 text-left font-semibold">Description</th>
             </tr>
           </thead>
           <tbody>
-            {expenses.length > 0 ? (
+            {expenses?.length > 0 ? (
               expenses.map((expense, index) => (
                 <tr key={index} className="hover:bg-gray-100 transition-colors">
-                  <td className="border px-4 py-3">{expense.type || 'General'}</td>
-                  <td className="border px-4 py-3">{expense.amount}</td>
-                  <td className="border px-4 py-3">{expense.date}</td>
-                  <td className="border px-4 py-3">{expense.description}</td>
+                  <td className="border px-4 py-3">{expense.amount ?? '-'}</td>
+                  <td className="border px-4 py-3">{expense.date ?? 'No date'}</td>
+                  <td className="border px-4 py-3">{expense.description ?? 'No description'}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="4" className="text-center px-4 py-3">No data available</td>
+                <td colSpan="3" className="text-center px-4 py-3">No expenses for this month</td>
               </tr>
             )}
           </tbody>
