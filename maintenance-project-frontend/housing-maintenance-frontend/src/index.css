@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* General body styling (gradient now moved to App.jsx) */
+body {
+  @apply text-gray-800;
+}
