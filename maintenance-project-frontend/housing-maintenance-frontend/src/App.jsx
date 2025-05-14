@@ -1,8 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import Residents from './pages/Residents';
-import Summary from './pages/Summary'; // Ensure this matches correct filename
-import Admin from './pages/Admin';
+import Summary from './pages/Summary';
 import Login from './pages/Login';
 
 function App() {
@@ -19,7 +18,6 @@ function App() {
   }, []);
 
   const handleLogout = () => {
-    console.log("Logging out...");
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     setToken(null);
@@ -39,7 +37,6 @@ function App() {
               <nav className="space-x-4">
                 <Link className="hover:underline" to="/">Residents</Link>
                 <Link className="hover:underline" to="/summary">Monthly Summary</Link>
-                {isAdmin && <Link className="hover:underline" to="/admin">Admin</Link>}
                 <button onClick={handleLogout} className="ml-4 underline text-white">Logout</button>
               </nav>
             )}
@@ -48,10 +45,35 @@ function App() {
 
         <main className="max-w-6xl mx-auto px-4 py-8 mt-6 bg-white rounded-xl shadow-lg">
           <Routes>
-            <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login onLogin={(t, r) => { setToken(t); setRole(r); }} />} />
-            <Route path="/" element={isAuthenticated ? <Residents /> : <Navigate to="/login" />} />
-            <Route path="/summary" element={isAuthenticated ? <Summary isAdmin={isAdmin} /> : <Navigate to="/login" />} /> {/* Pass isAdmin prop */}
-            <Route path="/admin" element={isAuthenticated && isAdmin ? <Admin /> : <Navigate to="/login" />} />
+            <Route
+              path="/login"
+              element={
+                isAuthenticated
+                  ? <Navigate to="/" />
+                  : <Login onLogin={(t, r) => { setToken(t); setRole(r); }} />
+              }
+            />
+            <Route
+              path="/"
+              element={
+                isAuthenticated
+                  ? <Residents />
+                  : <Navigate to="/login" />
+              }
+            />
+            <Route
+              path="/summary"
+              element={
+                isAuthenticated
+                  ? <Summary isAdmin={isAdmin} />
+                  : <Navigate to="/login" />
+              }
+            />
+            {/* catch-all */}
+            <Route
+              path="*"
+              element={<Navigate to={isAuthenticated ? "/" : "/login"} />}
+            />
           </Routes>
         </main>
       </div>

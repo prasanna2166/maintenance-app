@@ -6,6 +6,8 @@ function Admin() {
   const [payments, setPayments] = useState([]);
   const [year, setYear] = useState('2025');
 
+  const maintenanceAmount = 1000; // Adjust as needed
+
   const months = Array.from({ length: 12 }, (_, i) =>
     `${year}-${String(i + 1).padStart(2, '0')}`
   );
@@ -33,7 +35,7 @@ function Admin() {
     });
   };
 
-  const togglePayment = async (userId, month) => {
+  const togglePayment = async (userId, month, flatNumber) => {
     const fullDate = `${month}-01`;
     const existingPayment = findPayment(userId, month);
     const newPaid = existingPayment ? !existingPayment.paid : true;
@@ -43,6 +45,8 @@ function Admin() {
         user_id: userId,
         month: fullDate,
         paid: newPaid,
+        amount: maintenanceAmount,
+        flat_number: flatNumber,
       });
 
       const paymentRes = await api.get('/payments', { params: { year } });
@@ -91,7 +95,7 @@ function Admin() {
                   return (
                     <td key={month} className="border px-2 py-2 text-center">
                       <button
-                        onClick={() => togglePayment(user.id, month)}
+                        onClick={() => togglePayment(user.id, month, user.flat_number)}
                         className={`text-sm font-medium px-2 py-1 rounded ${
                           paid
                             ? 'bg-green-500 text-white hover:bg-green-600'
